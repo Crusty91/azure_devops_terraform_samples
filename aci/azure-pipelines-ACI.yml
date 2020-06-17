@@ -52,7 +52,7 @@ stages:
                     export ARM_CLIENT_SECRET=$servicePrincipalKey
                     export ARM_SUBSCRIPTION_ID=$(subscriptionId)
                     export ARM_TENANT_ID=$tenantId
-                    cd $(System.DefaultWorkingDirectory)/terraformTemplates
+                    cd $(System.DefaultWorkingDirectory)/aci
                     terraform init && 
                         terraform plan -out tfplan && 
                         terraform apply tfplan

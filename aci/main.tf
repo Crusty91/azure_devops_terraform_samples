@@ -46,7 +46,7 @@ resource "azurerm_container_group" "containergroup" {
     memory = "1.5"
 
     ports {
-      port     = 443
+      port     = 80
       protocol = "TCP"
     }
   }

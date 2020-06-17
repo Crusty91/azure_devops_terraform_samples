@@ -1,0 +1,59 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+    branches:
+        include:
+        - master
+    paths:
+        include:
+        - aci/*
+  
+pool:
+    vmImage: 'ubuntu-latest'
+  
+variables:
+    azureSubscription: 'azConnection'
+    kvName: 'democommoncanadaeastkv'
+stages:
+    - stage: 'Dev'
+      displayName: 'Dev'
+      variables:
+        environment: dev
+      jobs:
+        - job: 'Infrastructure'
+          steps:
+            - task: AzureKeyVault@1
+              inputs:
+                azureSubscription: $(azureSubscription)
+                KeyVaultName: $(kvName)
+                SecretsFilter: '*'
+            - task: replacetokens@3
+              inputs:
+                targetFiles: 'aci/*.tf'
+                encoding: 'auto'
+                writeBOM: true
+                actionOnMissing: 'fail'
+                keepToken: false
+                tokenPrefix: '#{'
+                tokenSuffix: '}#'
+            - task: TerraformInstaller@0
+              inputs:
+                terraformVersion: '0.12.25'
+            - task: AzureCLI@2
+              inputs:
+                azureSubscription: $(azureSubscription)
+                scriptType: 'bash'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                    export ARM_CLIENT_ID=$servicePrincipalId
+                    export ARM_CLIENT_SECRET=$servicePrincipalKey
+                    export ARM_SUBSCRIPTION_ID=$(subscriptionId)
+                    export ARM_TENANT_ID=$tenantId
+                    cd $(System.DefaultWorkingDirectory)/terraformTemplates
+                    terraform init && 
+                        terraform plan -out tfplan && 
+                        terraform apply tfplan
+                addSpnToEnvironment: true
